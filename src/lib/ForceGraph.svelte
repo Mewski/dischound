@@ -159,9 +159,32 @@
 			.scaleExtent([0.1, 8])
 			.on('zoom', (event) => {
 				transform = event.transform;
+				try {
+					sessionStorage.setItem(
+						'dischound_view_transform',
+						JSON.stringify({ x: transform.x, y: transform.y, k: transform.k }),
+					);
+				} catch {}
 			});
 
-		d3.select(svgEl!).call(zoom);
+		const svg = d3.select(svgEl!);
+		svg.call(zoom);
+
+		let initialTransform: d3.ZoomTransform;
+		try {
+			const saved = sessionStorage.getItem('dischound_view_transform');
+			if (saved) {
+				const { x, y, k } = JSON.parse(saved);
+				initialTransform = d3.zoomIdentity.translate(x, y).scale(k);
+			} else {
+				const { width, height } = svgEl!.getBoundingClientRect();
+				initialTransform = d3.zoomIdentity.translate(width / 2, height / 2);
+			}
+		} catch {
+			const { width, height } = svgEl!.getBoundingClientRect();
+			initialTransform = d3.zoomIdentity.translate(width / 2, height / 2);
+		}
+		svg.call(zoom.transform, initialTransform);
 
 		const drag = d3
 			.drag<SVGGElement, GraphNode>()

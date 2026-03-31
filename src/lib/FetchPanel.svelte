@@ -13,13 +13,15 @@
 		onComplete?: (data: GraphData) => void;
 	} = $props();
 
-	let status: 'idle' | 'done' = $state('idle');
+	let status: 'idle' | 'listening' | 'done' = $state('idle');
 	let showModal = $state(false);
 	let copied = $state(false);
 	let script = $state('');
 	let highlighted = $derived(
 		script ? hljs.highlight(script, { language: 'javascript' }).value : '',
 	);
+	let pollVersion = 0;
+	let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 	onMount(() => {
 		fetch('/howl.js')
@@ -27,13 +29,29 @@
 			.then((t) => (script = t))
 			.catch(() => {});
 		checkIngest();
+		startPolling();
+		return () => stopPolling();
 	});
+
+	function startPolling() {
+		if (pollTimer) return;
+		status = status === 'done' ? 'done' : 'listening';
+		pollTimer = setInterval(checkIngest, 2000);
+	}
+
+	function stopPolling() {
+		if (pollTimer) {
+			clearInterval(pollTimer);
+			pollTimer = null;
+		}
+	}
 
 	async function checkIngest() {
 		try {
-			const resp = await fetch('/api/ingest?v=0');
+			const resp = await fetch(`/api/ingest?v=${pollVersion}`);
 			if (resp.status === 200) {
 				const json = await resp.json();
+				pollVersion = json.v;
 				status = 'done';
 				onComplete(processRawData(json.data));
 			}
@@ -62,6 +80,8 @@
 	</button>
 	{#if status === 'done'}
 		<span class="text-[11px] text-[var(--color-success)]">Ready</span>
+	{:else if status === 'listening'}
+		<span class="text-[11px] text-[var(--color-text-dim)]">Listening...</span>
 	{/if}
 </div>
 
