@@ -18,7 +18,11 @@
 	let graphKey = $state(0);
 	let cachedMutuals: GraphData | null = null;
 	let cachedServers: GraphData | null = null;
-	let viewMode: 'mutuals' | 'servers' = $state('mutuals');
+	let viewMode: 'mutuals' | 'servers' = $state(
+		(typeof localStorage !== 'undefined' && localStorage.getItem('dischound_view')) === 'servers'
+			? 'servers'
+			: 'mutuals',
+	);
 	let selectedNode: GraphNode | null = $state(null);
 	let hoveredNode: GraphNode | null = $state(null);
 	let tooltipX = $state(0);
@@ -83,6 +87,7 @@
 		selectedNode = null;
 		data = mode === 'mutuals' ? cachedMutuals : cachedServers;
 		graphKey++;
+		localStorage.setItem('dischound_view', mode);
 	}
 
 	function handleFetch(fetched: GraphData) {

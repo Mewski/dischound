@@ -170,10 +170,14 @@
 				d.fy = null;
 			});
 
+		const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 		const applyDrag = () => {
 			d3.select(svgEl!)
 				.selectAll<SVGGElement, GraphNode>('.node-group')
-				.data(nodes, (d) => d.id)
+				.each(function () {
+					const node = nodeMap.get(this.dataset.id!);
+					if (node) d3.select(this).datum(node);
+				})
 				.call(drag);
 		};
 
@@ -241,6 +245,7 @@
 				{@const highlighted = isHighlighted(node)}
 				<g
 					class="node-group"
+					data-id={node.id}
 					transform="translate({node.x ?? 0},{node.y ?? 0})"
 					opacity={highlighted ? 1 : 0.15}
 					onmouseenter={(e: MouseEvent) => onNodeHover(node, e)}
