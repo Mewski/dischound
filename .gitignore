@@ -1,0 +1,32 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+.svelte-kit/
+build/
+dist/
+
+# Cached avatars (too large for git)
+static/avatars/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Old visualization output
+discord_graph.html
+lib/
+
+# Env
+.env
+.env.*
