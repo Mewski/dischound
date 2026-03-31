@@ -14,6 +14,9 @@ const config = {
 			assets: 'build',
 			fallback: 'index.html',
 		}),
+		csrf: {
+			checkOrigin: false,
+		},
 	},
 };
 
