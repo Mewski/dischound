@@ -362,5 +362,6 @@
 			{/if}
 		{/each}
 	</g>
+	<!-- Force re-render: d3 mutates node positions in place, bypassing Svelte reactivity -->
 	{#key ticked}{/key}
 </svg>

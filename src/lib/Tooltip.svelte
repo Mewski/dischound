@@ -62,7 +62,7 @@
 				<div class="flex justify-between">
 					<span class="text-[var(--color-text-dim)]">Bridging</span>
 					<span class="font-medium" style="color: {bridgingColor(node.bridging_score)}">
-						{bridgingLabel(node.bridging_score)} ({node.bridging_score.toFixed(4)})
+						{bridgingLabel(node.bridging_score)} ({node.bridging_score.toFixed(3)})
 					</span>
 				</div>
 			{/if}

@@ -49,58 +49,78 @@
 
 	let isolated = $derived(data ? data.nodes.filter((n) => n.mutuals.length === 0) : []);
 
-	let clusterGroups = $derived(
-		(() => {
-			if (!data) return [];
-			const map = new Map<number, GraphNode[]>();
-			for (const n of data.nodes) {
-				if (!map.has(n.cluster)) map.set(n.cluster, []);
-				map.get(n.cluster)!.push(n);
-			}
-			return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
-		})(),
-	);
+	let clusterGroups = $derived.by(() => {
+		if (!data) return [];
+		const map = new Map<number, GraphNode[]>();
+		for (const n of data.nodes) {
+			if (!map.has(n.cluster)) map.set(n.cluster, []);
+			map.get(n.cluster)!.push(n);
+		}
+		return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+	});
 
-	let clusterServerName = $derived(
-		(() => {
-			if (!data) return new Map<number, string>();
-			const map = new Map<number, string>();
-			for (const [cluster, members] of clusterGroups) {
-				if (cluster < 0) continue;
-				const freq = new Map<string, number>();
-				for (const n of members) {
-					for (const g of n.guilds) {
-						freq.set(g.id, (freq.get(g.id) ?? 0) + 1);
-					}
-				}
-				let bestId = '';
-				let bestCount = 0;
-				for (const [id, count] of freq) {
-					if (count > bestCount) {
-						bestId = id;
-						bestCount = count;
-					}
-				}
-				if (bestId && data.servers[bestId]) {
-					map.set(cluster, data.servers[bestId].name);
-				}
-			}
-			return map;
-		})(),
-	);
-
-	let serverCounts = $derived(
-		(() => {
-			if (!data) return [];
-			const counts = new Map<string, number>();
-			for (const n of data.nodes) {
+	let clusterServerName = $derived.by(() => {
+		if (!data) return new Map<number, string>();
+		const map = new Map<number, string>();
+		for (const [cluster, members] of clusterGroups) {
+			if (cluster < 0) continue;
+			const freq = new Map<string, number>();
+			for (const n of members) {
 				for (const g of n.guilds) {
-					counts.set(g.id, (counts.get(g.id) || 0) + 1);
+					freq.set(g.id, (freq.get(g.id) ?? 0) + 1);
 				}
 			}
-			return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-		})(),
-	);
+			let bestId = '';
+			let bestCount = 0;
+			for (const [id, count] of freq) {
+				if (count > bestCount) {
+					bestId = id;
+					bestCount = count;
+				}
+			}
+			if (bestId && data.servers[bestId]) {
+				map.set(cluster, data.servers[bestId].name);
+			}
+		}
+		return map;
+	});
+
+	let serverCounts = $derived.by(() => {
+		if (!data) return [];
+		const counts = new Map<string, number>();
+		for (const n of data.nodes) {
+			for (const g of n.guilds) {
+				counts.set(g.id, (counts.get(g.id) || 0) + 1);
+			}
+		}
+		return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+	});
+
+	let stats = $derived.by(() => {
+		if (!data) return [];
+		if (viewMode === 'servers') {
+			return [
+				[data.stats.total_friends, 'Users'],
+				[data.stats.clusters, 'Servers'],
+				[data.stats.isolated_count, 'Isolated'],
+			];
+		}
+		return [
+			[data.stats.total_friends, 'Friends'],
+			[data.stats.total_connections, 'Connections'],
+			[data.stats.clusters, 'Clusters'],
+			[data.stats.isolated_count, 'Isolated'],
+		];
+	});
+
+	function selectedClusterLabel(): string {
+		if (!selectedNode) return '';
+		if (viewMode === 'servers') {
+			if (selectedNode.cluster < 0) return 'No Server';
+			return clusterServerName.get(selectedNode.cluster) ?? `Server ${selectedNode.cluster}`;
+		}
+		return `Cluster ${selectedNode.cluster}`;
+	}
 </script>
 
 <aside
@@ -210,12 +230,12 @@
 								class="w-1.5 h-1.5 rounded-full"
 								style="background: {clusterColor(selectedNode.cluster)}"
 							></span>
-							#{selectedNode.cluster}
+							{selectedClusterLabel()}
 						</span>
 						<span>{selectedNode.mutuals.length} mutuals</span>
 						<span>{selectedNode.guilds.length} servers</span>
 					</div>
-					{#if selectedNode.bridging_score > 0}
+					{#if selectedNode.bridging_score > 0 && viewMode === 'mutuals'}
 						<div class="text-[11px]">
 							<span class="text-[var(--color-text-dim)]">Bridging:</span>
 							<span style="color: {bridgingColor(selectedNode.bridging_score)}">
@@ -229,7 +249,7 @@
 			{/if}
 
 			<div class="grid grid-cols-2 gap-2">
-				{#each [[data.stats.total_friends, 'Friends'], [data.stats.total_connections, 'Connections'], [data.stats.clusters, 'Clusters'], [data.stats.isolated_count, 'Isolated']] as [value, label] (label)}
+				{#each stats as [value, label] (label)}
 					<div class="bg-[var(--color-surface-raised)] rounded-md p-2.5 flex flex-col items-center">
 						<span class="text-lg font-semibold">{value}</span>
 						<span class="text-[10px] text-[var(--color-text-dim)] uppercase tracking-widest"
@@ -239,7 +259,7 @@
 				{/each}
 			</div>
 
-			{#if topBridges.length > 0}
+			{#if viewMode === 'mutuals' && topBridges.length > 0}
 				<div>
 					<button
 						class="flex items-center gap-1 w-full py-1.5 text-[11px] font-semibold text-[var(--color-text-dim)] uppercase tracking-wider bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors"
@@ -396,51 +416,53 @@
 				{/if}
 			</div>
 
-			<div>
-				<button
-					class="flex items-center gap-1 w-full py-1.5 text-[11px] font-semibold text-[var(--color-text-dim)] uppercase tracking-wider bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors"
-					onclick={() => toggleSection('servers')}
-				>
-					<svg
-						class="w-3 h-3 transition-transform duration-150"
-						class:rotate-[-90deg]={!expandedSections.servers}
-						viewBox="0 0 24 24"
-						fill="currentColor"
+			{#if viewMode === 'mutuals'}
+				<div>
+					<button
+						class="flex items-center gap-1 w-full py-1.5 text-[11px] font-semibold text-[var(--color-text-dim)] uppercase tracking-wider bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors"
+						onclick={() => toggleSection('servers')}
 					>
-						<path d="M7 10l5 5 5-5z" />
-					</svg>
-					Shared Servers
-				</button>
-				{#if expandedSections.servers}
-					<div class="flex flex-col gap-0.5">
-						{#each serverCounts as [serverId, count] (serverId)}
-							{@const server = data.servers[serverId]}
-							<div
-								class="flex items-center gap-2 px-2.5 py-1.5 text-sm text-[var(--color-text-muted)]"
-							>
-								{#if server?.icon}
-									<img
-										src={server.icon}
-										alt=""
-										crossorigin="anonymous"
-										class="w-5 h-5 rounded-full shrink-0 object-cover"
-									/>
-								{:else}
-									<div
-										class="w-5 h-5 rounded-full shrink-0 bg-[var(--color-surface-raised)] flex items-center justify-center text-[9px] font-semibold text-[var(--color-text-dim)]"
-									>
-										{(server?.name ?? '?')[0]}
-									</div>
-								{/if}
-								<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs"
-									>{server?.name ?? serverId}</span
+						<svg
+							class="w-3 h-3 transition-transform duration-150"
+							class:rotate-[-90deg]={!expandedSections.servers}
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path d="M7 10l5 5 5-5z" />
+						</svg>
+						Shared Servers
+					</button>
+					{#if expandedSections.servers}
+						<div class="flex flex-col gap-0.5">
+							{#each serverCounts as [serverId, count] (serverId)}
+								{@const server = data.servers[serverId]}
+								<div
+									class="flex items-center gap-2 px-2.5 py-1.5 text-sm text-[var(--color-text-muted)]"
 								>
-								<span class="text-[11px] font-medium shrink-0">{count}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
+									{#if server?.icon}
+										<img
+											src={server.icon}
+											alt=""
+											crossorigin="anonymous"
+											class="w-5 h-5 rounded-full shrink-0 object-cover"
+										/>
+									{:else}
+										<div
+											class="w-5 h-5 rounded-full shrink-0 bg-[var(--color-surface-raised)] flex items-center justify-center text-[9px] font-semibold text-[var(--color-text-dim)]"
+										>
+											{(server?.name ?? '?')[0]}
+										</div>
+									{/if}
+									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs"
+										>{server?.name ?? serverId}</span
+									>
+									<span class="text-[11px] font-medium shrink-0">{count}</span>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			<div class="mt-auto pt-3 border-t border-[var(--color-border)]">
 				<FetchPanel onComplete={onFetch} />
