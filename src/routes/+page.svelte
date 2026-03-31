@@ -109,7 +109,7 @@
 	<Sidebar
 		{data}
 		{viewMode}
-		onNodeClick={(node) => (selectedNode = node)}
+		onNodeClick={(node) => (selectedNode = selectedNode?.id === node.id ? null : node)}
 		onSearch={(ids) => (searchHighlight = ids)}
 		onFetch={handleFetch}
 		onViewModeChange={handleViewModeChange}
