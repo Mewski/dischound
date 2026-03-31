@@ -104,13 +104,22 @@
 		simulation = d3.forceSimulation<GraphNode>(nodes);
 
 		if (viewMode === 'mutuals') {
+			const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 			simulation.force(
 				'link',
 				d3
 					.forceLink<GraphNode, GraphEdge>(edges)
 					.id((d) => d.id)
-					.distance(90)
-					.strength(0.3),
+					.distance((e) => {
+						const s = typeof e.source === 'string' ? nodeMap.get(e.source) : e.source;
+						const t = typeof e.target === 'string' ? nodeMap.get(e.target) : e.target;
+						return s?.cluster !== t?.cluster ? 200 : 90;
+					})
+					.strength((e) => {
+						const s = typeof e.source === 'string' ? nodeMap.get(e.source) : e.source;
+						const t = typeof e.target === 'string' ? nodeMap.get(e.target) : e.target;
+						return s?.cluster !== t?.cluster ? 0.02 : 0.3;
+					}),
 			);
 		}
 

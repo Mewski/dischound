@@ -132,9 +132,11 @@
 		<div class="px-4 pt-3 pb-2 flex flex-col gap-2 shrink-0 border-b border-[var(--color-border)]">
 			<SearchBar nodes={data.nodes} {onSearch} />
 
-			<div class="flex rounded overflow-hidden border border-[var(--color-border)]">
+			<div
+				class="flex rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg)] p-0.5 gap-0.5"
+			>
 				<button
-					class="flex-1 py-1.5 text-xs font-medium border-none cursor-pointer transition-colors"
+					class="flex-1 py-1.5 text-xs font-medium border-none cursor-pointer transition-colors rounded"
 					class:bg-[var(--color-surface-raised)]={viewMode === 'mutuals'}
 					class:text-[var(--color-text)]={viewMode === 'mutuals'}
 					class:bg-transparent={viewMode !== 'mutuals'}
@@ -144,7 +146,7 @@
 					Mutuals
 				</button>
 				<button
-					class="flex-1 py-1.5 text-xs font-medium border-none cursor-pointer transition-colors"
+					class="flex-1 py-1.5 text-xs font-medium border-none cursor-pointer transition-colors rounded"
 					class:bg-[var(--color-surface-raised)]={viewMode === 'servers'}
 					class:text-[var(--color-text)]={viewMode === 'servers'}
 					class:bg-transparent={viewMode !== 'servers'}
