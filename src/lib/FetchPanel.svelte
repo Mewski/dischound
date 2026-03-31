@@ -3,7 +3,7 @@
 	import hljs from 'highlight.js/lib/core';
 	import javascript from 'highlight.js/lib/languages/javascript';
 	import type { GraphData } from './types';
-	import { processRawData } from './discord-fetch';
+	import { processRawData } from './data-processing';
 
 	hljs.registerLanguage('javascript', javascript);
 

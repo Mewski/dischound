@@ -41,11 +41,13 @@
 		return s.id === selectedNode.id || t.id === selectedNode.id;
 	}
 
+	let selectedMutuals = $derived(selectedNode ? new Set(selectedNode.mutuals) : new Set<string>());
+
 	function isHighlighted(n: GraphNode): boolean {
 		if (searchHighlight.size > 0) return searchHighlight.has(n.id);
 		if (!selectedNode) return true;
 		if (n.id === selectedNode.id) return true;
-		return selectedNode.mutuals.includes(n.id);
+		return selectedMutuals.has(n.id);
 	}
 
 	function clusterForce(alpha: number) {

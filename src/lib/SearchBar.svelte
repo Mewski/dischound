@@ -18,6 +18,14 @@
 			.toLowerCase();
 	}
 
+	let strippedNodes = $derived(
+		nodes.map((n) => ({
+			id: n.id,
+			username: strip(n.username),
+			displayName: strip(n.display_name),
+		})),
+	);
+
 	$effect(() => {
 		if (!query.trim()) {
 			onSearch(new Set());
@@ -25,8 +33,8 @@
 		}
 		const q = strip(query);
 		const ids = new Set(
-			nodes
-				.filter((n) => strip(n.username).includes(q) || strip(n.display_name).includes(q))
+			strippedNodes
+				.filter((n) => n.username.includes(q) || n.displayName.includes(q))
 				.map((n) => n.id),
 		);
 		onSearch(ids);

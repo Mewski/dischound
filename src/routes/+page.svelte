@@ -7,7 +7,7 @@
 		assignMutualClusters,
 		assignServerClusters,
 		computeBridgingScores,
-	} from '$lib/discord-fetch';
+	} from '$lib/data-processing';
 	import type { GraphNode, GraphData } from '$lib/types';
 
 	const CACHE_KEY = 'dischound_data';
@@ -51,12 +51,8 @@
 		} catch {}
 	}
 
-	function clone(d: GraphData): GraphData {
-		return structuredClone(d);
-	}
-
 	function buildView(d: GraphData, mode: 'mutuals' | 'servers'): GraphData {
-		const v = clone(d);
+		const v: GraphData = structuredClone(d);
 		if (mode === 'servers') {
 			assignServerClusters(v.nodes);
 		} else {
