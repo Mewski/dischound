@@ -27,7 +27,12 @@
 	>
 		<div class="flex items-center gap-2.5 mb-2 pb-2 border-b border-[var(--color-border)]">
 			{#if node.avatar}
-				<img src={node.avatar} alt={node.username} class="w-9 h-9 rounded-full object-cover" />
+				<img
+					src={node.avatar}
+					alt={node.username}
+					crossorigin="anonymous"
+					class="w-9 h-9 rounded-full object-cover"
+				/>
 			{:else}
 				<div
 					class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-base text-white"

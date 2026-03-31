@@ -3,15 +3,21 @@
 	import ForceGraph from '$lib/ForceGraph.svelte';
 	import Tooltip from '$lib/Tooltip.svelte';
 	import Sidebar from '$lib/Sidebar.svelte';
-	import { assignMutualClusters, assignServerClusters } from '$lib/discord-fetch';
+	import {
+		assignMutualClusters,
+		assignServerClusters,
+		computeBridgingScores,
+	} from '$lib/discord-fetch';
 	import type { GraphNode, GraphData } from '$lib/types';
 
 	const CACHE_KEY = 'dischound_data';
 	const CACHE_VERSION = 3;
 	const CACHE_TTL = 1000 * 60 * 60;
 
-	let rawData: GraphData | null = $state(null);
 	let data: GraphData | null = $state(null);
+	let graphKey = $state(0);
+	let cachedMutuals: GraphData | null = null;
+	let cachedServers: GraphData | null = null;
 	let viewMode: 'mutuals' | 'servers' = $state('mutuals');
 	let selectedNode: GraphNode | null = $state(null);
 	let hoveredNode: GraphNode | null = $state(null);
@@ -38,26 +44,30 @@
 				CACHE_KEY,
 				JSON.stringify({ v: CACHE_VERSION, ts: Date.now(), data: d }),
 			);
-		} catch {
-			/* localStorage may be full or unavailable */
-		}
+		} catch {}
 	}
 
-	function applyMode(source: GraphData, mode: 'mutuals' | 'servers'): GraphData {
-		const clone = structuredClone(source);
+	function clone(d: GraphData): GraphData {
+		return JSON.parse(JSON.stringify(d));
+	}
+
+	function buildView(d: GraphData, mode: 'mutuals' | 'servers'): GraphData {
+		const v = clone(d);
 		if (mode === 'servers') {
-			assignServerClusters(clone.nodes);
+			assignServerClusters(v.nodes);
 		} else {
-			assignMutualClusters(clone.nodes);
+			assignMutualClusters(v.nodes);
 		}
-		const clusterSet = new Set(clone.nodes.map((n) => n.cluster).filter((c) => c >= 0));
-		clone.stats.clusters = clusterSet.size;
-		return clone;
+		computeBridgingScores(v.nodes);
+		v.stats.clusters = new Set(v.nodes.map((n) => n.cluster).filter((c) => c >= 0)).size;
+		return v;
 	}
 
 	function setData(d: GraphData) {
-		rawData = d;
-		data = applyMode(d, viewMode);
+		cachedMutuals = buildView(d, 'mutuals');
+		cachedServers = buildView(d, 'servers');
+		data = viewMode === 'mutuals' ? cachedMutuals : cachedServers;
+		graphKey++;
 		saveCache(d);
 	}
 
@@ -67,10 +77,12 @@
 	});
 
 	function handleViewModeChange(mode: 'mutuals' | 'servers') {
-		if (!rawData) return;
+		if (mode === viewMode) return;
 		viewMode = mode;
 		hiddenClusters = new Set();
-		data = applyMode(rawData, mode);
+		selectedNode = null;
+		data = mode === 'mutuals' ? cachedMutuals : cachedServers;
+		graphKey++;
 	}
 
 	function handleFetch(fetched: GraphData) {
@@ -106,14 +118,16 @@
 	/>
 	<div class="flex-1 relative overflow-hidden">
 		{#if data}
-			<ForceGraph
-				nodes={data.nodes}
-				onNodeHover={handleNodeHover}
-				onNodeClick={(node) => (selectedNode = node)}
-				{selectedNode}
-				{searchHighlight}
-				{hiddenClusters}
-			/>
+			{#key graphKey}
+				<ForceGraph
+					nodes={data.nodes}
+					onNodeHover={handleNodeHover}
+					onNodeClick={(node) => (selectedNode = node)}
+					{selectedNode}
+					{searchHighlight}
+					{hiddenClusters}
+				/>
+			{/key}
 			<Tooltip node={hoveredNode} x={tooltipX} y={tooltipY} />
 		{:else}
 			<div

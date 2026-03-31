@@ -26,9 +26,6 @@ export function processRawData(raw: RawPayload): GraphData {
 		guilds: n.guilds,
 	}));
 
-	assignMutualClusters(nodes);
-	computeBridgingScores(nodes);
-
 	let edgeCount = 0;
 	const seen = new Set<string>();
 	for (const node of nodes) {
@@ -55,7 +52,7 @@ export function processRawData(raw: RawPayload): GraphData {
 	};
 }
 
-function computeBridgingScores(nodes: GraphNode[]): void {
+export function computeBridgingScores(nodes: GraphNode[]): void {
 	const idToNode = new Map(nodes.map((n) => [n.id, n]));
 	let max = 0;
 

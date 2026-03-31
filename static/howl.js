@@ -80,11 +80,14 @@
 		} catch (e) { console.warn(`[howl] ${f.user.username}: ${e.message}`); }
 
 		const av = f.user.avatar;
+		const avatar = av
+			? `https://cdn.discordapp.com/avatars/${f.id}/${av}.webp?size=128`
+			: `https://cdn.discordapp.com/embed/avatars/${(BigInt(f.id) >> 22n) % 6n}.png`;
 		nodes.push({
 			id: f.id,
 			username: f.user.username,
 			display_name: f.user.global_name ?? f.user.username,
-			avatar: av ? `https://cdn.discordapp.com/avatars/${f.id}/${av}.webp?size=128` : null,
+			avatar,
 			mutuals, guilds,
 		});
 

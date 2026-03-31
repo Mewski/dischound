@@ -44,7 +44,11 @@ export function clusterColor(cluster: number): string {
 	return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
 }
 
-export function computeHulls(nodes: GraphNode[], padding = 30, minSize = 3): Map<number, [number, number][]> {
+export function computeHulls(
+	nodes: GraphNode[],
+	nodeRadius: (n: GraphNode) => number,
+	padding = 10,
+): Map<number, [number, number][]> {
 	const hulls = new Map<number, [number, number][]>();
 	const byCluster = new Map<number, GraphNode[]>();
 
@@ -55,22 +59,18 @@ export function computeHulls(nodes: GraphNode[], padding = 30, minSize = 3): Map
 	}
 
 	for (const [cluster, clusterNodes] of byCluster) {
-		if (clusterNodes.length < minSize) continue;
+		if (clusterNodes.length < 3) continue;
 
-		const points: [number, number][] = clusterNodes.map((n) => [n.x!, n.y!]);
+		const points: [number, number][] = [];
+		for (const n of clusterNodes) {
+			const r = nodeRadius(n) + padding;
+			for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+				points.push([n.x! + Math.cos(a) * r, n.y! + Math.sin(a) * r]);
+			}
+		}
+
 		const hull = d3.polygonHull(points);
-		if (!hull) continue;
-
-		const centroid = d3.polygonCentroid(hull);
-		const padded: [number, number][] = hull.map(([x, y]) => {
-			const dx = x - centroid[0];
-			const dy = y - centroid[1];
-			const len = Math.sqrt(dx * dx + dy * dy);
-			if (len === 0) return [x, y] as [number, number];
-			return [x + (dx / len) * padding, y + (dy / len) * padding] as [number, number];
-		});
-
-		hulls.set(cluster, padded);
+		if (hull) hulls.set(cluster, hull);
 	}
 
 	return hulls;

@@ -27,7 +27,7 @@ export default ts.config(
 			'no-empty': ['error', { allowEmptyCatch: true }],
 			'svelte/require-each-key': 'warn',
 			'svelte/prefer-svelte-reactivity': 'off',
-			'svelte/no-at-html-tags': 'warn',
+			'svelte/no-at-html-tags': 'off',
 		},
 	},
 	{

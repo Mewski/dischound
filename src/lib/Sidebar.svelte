@@ -8,7 +8,6 @@
 	let {
 		data,
 		viewMode = 'mutuals',
-		minClusterSize = $bindable(3),
 		onNodeClick = () => {},
 		onSearch = () => {},
 		onFetch = () => {},
@@ -18,7 +17,6 @@
 	}: {
 		data: GraphData | null;
 		viewMode?: 'mutuals' | 'servers';
-		minClusterSize?: number;
 		onNodeClick?: (node: GraphNode) => void;
 		onSearch?: (ids: Set<string>) => void;
 		onFetch?: (data: GraphData) => void;
@@ -103,7 +101,7 @@
 	</div>
 
 	{#if data}
-		<div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 scrollbar-thin">
+		<div class="px-4 pt-3 pb-2 flex flex-col gap-2 shrink-0 border-b border-[var(--color-border)]">
 			<SearchBar nodes={data.nodes} {onSearch} />
 
 			<div class="flex rounded overflow-hidden border border-[var(--color-border)]">
@@ -128,19 +126,9 @@
 					Servers
 				</button>
 			</div>
+		</div>
 
-			<div class="flex items-center gap-2">
-				<span class="text-[11px] text-[var(--color-text-dim)] shrink-0">Hull min</span>
-				<input
-					type="range"
-					min="2"
-					max="10"
-					bind:value={minClusterSize}
-					class="flex-1 h-1 accent-[var(--color-text-muted)] cursor-pointer"
-				/>
-				<span class="text-[11px] text-[var(--color-text-dim)] w-4 text-right">{minClusterSize}</span>
-			</div>
-
+		<div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 scrollbar-thin">
 			<div class="grid grid-cols-2 gap-2">
 				{#each [[data.stats.total_friends, 'Friends'], [data.stats.total_connections, 'Connections'], [data.stats.clusters, 'Clusters'], [data.stats.isolated_count, 'Isolated']] as [value, label] (label)}
 					<div class="bg-[var(--color-surface-raised)] rounded-md p-2.5 flex flex-col items-center">
@@ -175,10 +163,21 @@
 									class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm bg-transparent border-none text-[var(--color-text-muted)] text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
 									onclick={() => onNodeClick(node)}
 								>
-									<span
-										class="w-2 h-2 rounded-full shrink-0"
-										style="background: {clusterColor(node.cluster)}"
-									></span>
+									{#if node.avatar}
+										<img
+											src={node.avatar}
+											alt=""
+											crossorigin="anonymous"
+											class="w-5 h-5 rounded-full shrink-0 object-cover"
+										/>
+									{:else}
+										<div
+											class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-semibold text-white"
+											style="background: {clusterColor(node.cluster)}"
+										>
+											{node.username[0].toUpperCase()}
+										</div>
+									{/if}
 									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
 										>{node.username}</span
 									>
@@ -263,6 +262,20 @@
 								class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm bg-transparent border-none text-[var(--color-text-muted)] text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
 								onclick={() => onNodeClick(node)}
 							>
+								{#if node.avatar}
+									<img
+										src={node.avatar}
+										alt=""
+										crossorigin="anonymous"
+										class="w-5 h-5 rounded-full shrink-0 object-cover"
+									/>
+								{:else}
+									<div
+										class="w-5 h-5 rounded-full shrink-0 bg-[var(--color-surface-raised)] flex items-center justify-center text-[9px] font-semibold text-[var(--color-text-dim)]"
+									>
+										{node.username[0].toUpperCase()}
+									</div>
+								{/if}
 								<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
 									>{node.username}</span
 								>
@@ -303,6 +316,7 @@
 									<img
 										src={server.icon}
 										alt=""
+										crossorigin="anonymous"
 										class="w-5 h-5 rounded-full shrink-0 object-cover"
 									/>
 								{:else}

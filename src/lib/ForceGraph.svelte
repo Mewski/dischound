@@ -6,7 +6,6 @@
 
 	let {
 		nodes,
-		minClusterSize = 3,
 		onNodeHover = () => {},
 		onNodeClick = () => {},
 		selectedNode = null,
@@ -14,7 +13,6 @@
 		hiddenClusters = new Set<number>(),
 	}: {
 		nodes: GraphNode[];
-		minClusterSize?: number;
 		onNodeHover?: (node: GraphNode | null, event: MouseEvent | null) => void;
 		onNodeClick?: (node: GraphNode | null) => void;
 		selectedNode?: GraphNode | null;
@@ -27,9 +25,8 @@
 	let hulls: Map<number, [number, number][]> = $state(new Map());
 	let transform = $state(d3.zoomIdentity);
 	let ticked = $state(0);
-	let lastNodeCount = 0;
 
-	const nodeRadius = (n: GraphNode) => 8 + n.bridging_score * 80;
+	const nodeRadius = (n: GraphNode) => 14 + n.bridging_score * 20;
 
 	function isVisible(n: GraphNode): boolean {
 		return !hiddenClusters.has(n.cluster);
@@ -67,8 +64,8 @@
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
 			const c = centroids.get(n.cluster);
 			if (!c) continue;
-			n.vx! += (c.x - n.x) * alpha * 0.3;
-			n.vy! += (c.y - n.y) * alpha * 0.3;
+			n.vx! += (c.x - n.x) * alpha * 0.08;
+			n.vy! += (c.y - n.y) * alpha * 0.08;
 		}
 	}
 
@@ -92,22 +89,20 @@
 				d3
 					.forceLink<GraphNode, GraphEdge>(edges)
 					.id((d) => d.id)
-					.distance(100)
-					.strength(0.3),
+					.distance(65)
+					.strength(0.4),
 			)
-			.force('charge', d3.forceManyBody().strength(-200))
+			.force('charge', d3.forceManyBody().strength(-140))
 			.force('center', d3.forceCenter(0, 0))
 			.force(
 				'collide',
-				d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 6),
+				d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 4),
 			)
 			.force('cluster', clusterForce)
 			.on('tick', () => {
-				hulls = computeHulls(nodes, 30, minClusterSize);
+				hulls = computeHulls(nodes, nodeRadius);
 				ticked++;
 			});
-
-		lastNodeCount = nodes.length;
 	}
 
 	onMount(() => {
@@ -151,12 +146,6 @@
 			observer.disconnect();
 			simulation.stop();
 		};
-	});
-
-	$effect(() => {
-		if (nodes.length !== lastNodeCount && nodes.length > 0) {
-			rebuildSimulation();
-		}
 	});
 
 	function handleSvgClick(event: MouseEvent) {
@@ -246,13 +235,26 @@
 					{#if node.avatar}
 						<image
 							href={node.avatar}
+							crossorigin="anonymous"
 							x={-r}
 							y={-r}
 							width={r * 2}
 							height={r * 2}
 							clip-path="url(#clip-{node.id})"
 							preserveAspectRatio="xMidYMid slice"
+							onerror={(e) => {
+								(e.currentTarget as SVGImageElement).style.display = 'none';
+							}}
 						/>
+					{:else}
+						<text
+							text-anchor="middle"
+							dominant-baseline="central"
+							style="fill: white"
+							font-size={r * 0.9}
+							font-family="Inter, sans-serif"
+							font-weight="600">{node.username[0].toUpperCase()}</text
+						>
 					{/if}
 
 					<text

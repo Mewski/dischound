@@ -13,8 +13,7 @@
 		onComplete?: (data: GraphData) => void;
 	} = $props();
 
-	let polling = $state(false);
-	let status: 'idle' | 'waiting' | 'done' = $state('idle');
+	let status: 'idle' | 'done' = $state('idle');
 	let showModal = $state(false);
 	let copied = $state(false);
 	let script = $state('');
@@ -23,15 +22,23 @@
 	);
 
 	onMount(() => {
-		poll();
 		fetch('/howl.js')
 			.then((r) => (r.ok ? r.text() : ''))
 			.then((t) => (script = t))
 			.catch(() => {});
-		return () => {
-			polling = false;
-		};
+		checkIngest();
 	});
+
+	async function checkIngest() {
+		try {
+			const resp = await fetch('/api/ingest?v=0');
+			if (resp.status === 200) {
+				const json = await resp.json();
+				status = 'done';
+				onComplete(processRawData(json.data));
+			}
+		} catch {}
+	}
 
 	function onKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape' && showModal) showModal = false;
@@ -42,30 +49,9 @@
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
 	}
-
-	let lastVersion = 0;
-
-	async function poll() {
-		if (polling) return;
-		polling = true;
-		status = 'waiting';
-
-		while (polling) {
-			try {
-				const resp = await fetch(`/api/ingest?v=${lastVersion}`);
-				if (resp.status === 200) {
-					const json = await resp.json();
-					lastVersion = json.v;
-					status = 'done';
-					onComplete(processRawData(json.data));
-				}
-			} catch (e) {
-				console.error('[dischound] poll error:', e);
-			}
-			await new Promise((r) => setTimeout(r, 2000));
-		}
-	}
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div class="flex items-center justify-between">
 	<button
@@ -74,17 +60,10 @@
 	>
 		Collect new data
 	</button>
-	{#if status === 'waiting'}
-		<span class="text-[11px] text-[var(--color-text-dim)] flex items-center gap-1">
-			<span class="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse"></span>
-			Listening
-		</span>
-	{:else if status === 'done'}
-		<span class="text-[11px] text-[var(--color-success)]">Received</span>
+	{#if status === 'done'}
+		<span class="text-[11px] text-[var(--color-success)]">Ready</span>
 	{/if}
 </div>
-
-<svelte:window onkeydown={onKeydown} />
 
 {#if showModal}
 	<div
@@ -130,6 +109,10 @@
 						{copied ? 'Copied' : 'Copy'}
 					</button>
 				</div>
+
+				<p class="text-[11px] text-[var(--color-text-dim)]">
+					Paste in Discord console. Refresh this page when done.
+				</p>
 			</div>
 		</div>
 	</div>
