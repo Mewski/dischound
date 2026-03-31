@@ -28,6 +28,7 @@
 	} = $props();
 
 	let expandedSections: Record<string, boolean> = $state({
+		mostMutuals: true,
 		bridges: true,
 		clusters: true,
 		isolated: false,
@@ -38,6 +39,15 @@
 	function toggleSection(key: string) {
 		expandedSections[key] = !expandedSections[key];
 	}
+
+	let topMutuals = $derived(
+		data
+			? [...data.nodes]
+					.sort((a, b) => b.mutuals.length - a.mutuals.length)
+					.filter((n) => n.mutuals.length > 0)
+					.slice(0, 10)
+			: [],
+	);
 
 	let topBridges = $derived(
 		data
@@ -264,6 +274,64 @@
 					</div>
 				{/each}
 			</div>
+
+			{#if viewMode === 'mutuals' && topMutuals.length > 0}
+				<div>
+					<button
+						class="flex items-center gap-1 w-full py-1.5 text-[11px] font-semibold text-[var(--color-text-dim)] uppercase tracking-wider bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors"
+						onclick={() => toggleSection('mostMutuals')}
+					>
+						<svg
+							class="w-3 h-3 transition-transform duration-150"
+							class:rotate-[-90deg]={!expandedSections.mostMutuals}
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path d="M7 10l5 5 5-5z" />
+						</svg>
+						Most Mutuals
+					</button>
+					{#if expandedSections.mostMutuals}
+						<div class="flex flex-col gap-0.5">
+							{#each topMutuals as node (node.id)}
+								<button
+									class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm border-none text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
+									class:bg-[var(--color-hover)]={selectedNode?.id === node.id}
+									class:text-[var(--color-text)]={selectedNode?.id === node.id}
+									class:bg-transparent={selectedNode?.id !== node.id}
+									class:text-[var(--color-text-muted)]={selectedNode?.id !== node.id}
+									onclick={() => onNodeClick(node)}
+								>
+									{#if node.avatar}
+										<img
+											src={node.avatar}
+											alt=""
+											crossorigin="anonymous"
+											onerror={(e) => {
+												(e.currentTarget as HTMLImageElement).style.display = 'none';
+											}}
+											class="w-5 h-5 rounded-full shrink-0 object-cover"
+										/>
+									{:else}
+										<div
+											class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-semibold text-white"
+											style="background: {clusterColor(node.cluster)}"
+										>
+											{(node.username || '?')[0].toUpperCase()}
+										</div>
+									{/if}
+									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+										>{node.username}</span
+									>
+									<span class="text-[11px] font-medium shrink-0 text-[var(--color-text-dim)]">
+										{node.mutuals.length}
+									</span>
+								</button>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			{#if viewMode === 'mutuals' && topBridges.length > 0}
 				<div>
