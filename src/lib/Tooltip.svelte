@@ -7,11 +7,13 @@
 		x = 0,
 		y = 0,
 		viewMode = 'mutuals',
+		clusterLabel = '',
 	}: {
 		node?: GraphNode | null;
 		x?: number;
 		y?: number;
 		viewMode?: 'mutuals' | 'servers';
+		clusterLabel?: string;
 	} = $props();
 
 	let clampedX = $derived(
@@ -24,7 +26,7 @@
 
 {#if node}
 	<div
-		class="fixed z-50 bg-[var(--color-surface-raised)] border border-[var(--color-border)] rounded-lg p-3 min-w-[200px] shadow-xl pointer-events-none font-sans"
+		class="fixed z-50 bg-[var(--color-surface-raised)] border border-[var(--color-border)] rounded-lg p-2.5 min-w-[200px] max-w-[280px] shadow-xl pointer-events-none font-sans"
 		style="left: {clampedX}px; top: {Math.max(8, clampedY)}px;"
 	>
 		<div class="flex items-center gap-2.5 mb-2 pb-2 border-b border-[var(--color-border)]">
@@ -33,33 +35,38 @@
 					src={node.avatar}
 					alt={node.username}
 					crossorigin="anonymous"
-					class="w-9 h-9 rounded-full object-cover"
+					class="w-8 h-8 rounded-full object-cover"
+					onerror={(e) => {
+						(e.currentTarget as HTMLImageElement).style.display = 'none';
+					}}
 				/>
 			{:else}
 				<div
-					class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-base text-white"
+					class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white"
 					style="background: {clusterColor(node.cluster)}"
 				>
 					{(node.username || '?')[0].toUpperCase()}
 				</div>
 			{/if}
-			<div>
-				<div class="font-semibold text-sm text-[var(--color-text)]">{node.display_name}</div>
-				<div class="text-xs text-[var(--color-text-dim)]">@{node.username}</div>
+			<div class="min-w-0">
+				<div class="text-sm font-semibold text-[var(--color-text)] truncate">
+					{node.display_name}
+				</div>
+				<div class="text-[11px] text-[var(--color-text-dim)] truncate">@{node.username}</div>
 			</div>
 		</div>
 
-		<div class="flex flex-col gap-1 text-xs">
+		<div class="flex flex-col gap-1 text-[11px]">
 			<div class="flex justify-between">
 				<span class="text-[var(--color-text-dim)]"
 					>{viewMode === 'servers' ? 'Server' : 'Cluster'}</span
 				>
 				<span class="text-[var(--color-text)] font-medium flex items-center gap-1">
 					<span
-						class="w-2 h-2 rounded-full inline-block"
+						class="w-1.5 h-1.5 rounded-full inline-block"
 						style="background: {clusterColor(node.cluster)}"
 					></span>
-					#{node.cluster}
+					{clusterLabel || `#${node.cluster}`}
 				</span>
 			</div>
 			{#if node.bridging_score > 0 && viewMode === 'mutuals'}

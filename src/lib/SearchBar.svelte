@@ -26,8 +26,11 @@
 		})),
 	);
 
+	let noResults = $state(false);
+
 	$effect(() => {
 		if (!query.trim()) {
+			noResults = false;
 			onSearch(new Set());
 			return;
 		}
@@ -37,6 +40,8 @@
 				.filter((n) => n.username.includes(q) || n.displayName.includes(q))
 				.map((n) => n.id),
 		);
+		noResults = ids.size === 0;
+		if (ids.size === 0) ids.add('__no_match__');
 		onSearch(ids);
 	});
 </script>
@@ -61,4 +66,7 @@
 		aria-label="Search users"
 		class="bg-transparent border-none outline-none text-[var(--color-text)] font-sans text-sm w-full placeholder:text-[var(--color-text-dim)]"
 	/>
+	{#if noResults}
+		<span class="text-[11px] text-[var(--color-text-dim)] shrink-0">No results</span>
+	{/if}
 </div>

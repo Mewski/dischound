@@ -28,7 +28,7 @@
 	let transform = $state(d3.zoomIdentity);
 	let ticked = $state(0);
 
-	const nodeRadius = (n: GraphNode) => 12 + n.bridging_score * 10;
+	const nodeRadius = (n: GraphNode) => (viewMode === 'mutuals' ? 12 + n.bridging_score * 10 : 12);
 
 	function isVisible(n: GraphNode): boolean {
 		return !hiddenClusters.has(n.cluster);

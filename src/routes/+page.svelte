@@ -98,6 +98,29 @@
 		}
 	}
 
+	function getClusterLabel(node: GraphNode | null): string {
+		if (!node || !data) return '';
+		if (viewMode === 'mutuals') return node.cluster < 0 ? 'Unclustered' : `Cluster ${node.cluster}`;
+		if (node.cluster < 0) return 'No Server';
+		// Find most common server in this cluster's members
+		const members = data.nodes.filter((n) => n.cluster === node.cluster);
+		const freq = new Map<string, number>();
+		for (const n of members) {
+			for (const g of n.guilds) {
+				freq.set(g.id, (freq.get(g.id) ?? 0) + 1);
+			}
+		}
+		let bestId = '';
+		let bestCount = 0;
+		for (const [id, count] of freq) {
+			if (count > bestCount) {
+				bestId = id;
+				bestCount = count;
+			}
+		}
+		return data.servers[bestId]?.name ?? `Server ${node.cluster}`;
+	}
+
 	function handleToggleCluster(cluster: number) {
 		const next = new Set(hiddenClusters);
 		if (next.has(cluster)) next.delete(cluster);
@@ -131,7 +154,13 @@
 					{hiddenClusters}
 				/>
 			{/key}
-			<Tooltip node={hoveredNode} x={tooltipX} y={tooltipY} {viewMode} />
+			<Tooltip
+				node={hoveredNode}
+				x={tooltipX}
+				y={tooltipY}
+				{viewMode}
+				clusterLabel={getClusterLabel(hoveredNode)}
+			/>
 		{:else}
 			<div
 				class="flex items-center justify-center w-full h-full text-[var(--color-text-dim)] font-sans text-sm"

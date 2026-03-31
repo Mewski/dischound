@@ -32,6 +32,7 @@
 		clusters: true,
 		isolated: false,
 		servers: false,
+		isolatedAll: false,
 	});
 
 	function toggleSection(key: string) {
@@ -191,6 +192,9 @@
 								src={selectedNode.avatar}
 								alt=""
 								crossorigin="anonymous"
+								onerror={(e) => {
+									(e.currentTarget as HTMLImageElement).style.display = 'none';
+								}}
 								class="w-8 h-8 rounded-full shrink-0 object-cover"
 							/>
 						{:else}
@@ -205,7 +209,7 @@
 							<div class="text-sm font-semibold text-[var(--color-text)] truncate">
 								{selectedNode.display_name}
 							</div>
-							<div class="text-[11px] text-[var(--color-text-dim)]">
+							<div class="text-[11px] text-[var(--color-text-dim)] truncate">
 								@{selectedNode.username}
 							</div>
 						</div>
@@ -293,6 +297,9 @@
 											src={node.avatar}
 											alt=""
 											crossorigin="anonymous"
+											onerror={(e) => {
+												(e.currentTarget as HTMLImageElement).style.display = 'none';
+											}}
 											class="w-5 h-5 rounded-full shrink-0 object-cover"
 										/>
 									{:else}
@@ -381,7 +388,7 @@
 				</button>
 				{#if expandedSections.isolated}
 					<div class="flex flex-col gap-0.5">
-						{#each isolated.slice(0, 15) as node (node.id)}
+						{#each isolated.slice(0, expandedSections.isolatedAll ? undefined : 15) as node (node.id)}
 							<button
 								class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm border-none text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
 								class:bg-[var(--color-hover)]={selectedNode?.id === node.id}
@@ -395,6 +402,9 @@
 										src={node.avatar}
 										alt=""
 										crossorigin="anonymous"
+										onerror={(e) => {
+											(e.currentTarget as HTMLImageElement).style.display = 'none';
+										}}
 										class="w-5 h-5 rounded-full shrink-0 object-cover"
 									/>
 								{:else}
@@ -409,10 +419,13 @@
 								>
 							</button>
 						{/each}
-						{#if isolated.length > 15}
-							<div class="text-[11px] text-[var(--color-text-dim)] px-2.5 py-1">
+						{#if isolated.length > 15 && !expandedSections.isolatedAll}
+							<button
+								class="text-[11px] text-[var(--color-text-dim)] px-2.5 py-1 bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors w-full text-left"
+								onclick={() => (expandedSections.isolatedAll = true)}
+							>
 								+{isolated.length - 15} more
-							</div>
+							</button>
 						{/if}
 					</div>
 				{/if}
@@ -446,6 +459,9 @@
 											src={server.icon}
 											alt=""
 											crossorigin="anonymous"
+											onerror={(e) => {
+												(e.currentTarget as HTMLImageElement).style.display = 'none';
+											}}
 											class="w-5 h-5 rounded-full shrink-0 object-cover"
 										/>
 									{:else}
