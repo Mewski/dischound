@@ -131,7 +131,7 @@
 					{hiddenClusters}
 				/>
 			{/key}
-			<Tooltip node={hoveredNode} x={tooltipX} y={tooltipY} />
+			<Tooltip node={hoveredNode} x={tooltipX} y={tooltipY} {viewMode} />
 		{:else}
 			<div
 				class="flex items-center justify-center w-full h-full text-[var(--color-text-dim)] font-sans text-sm"

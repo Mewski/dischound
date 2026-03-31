@@ -127,7 +127,7 @@
 	class="w-[280px] shrink-0 h-dvh bg-[var(--color-surface)] border-r border-[var(--color-border)] font-sans text-[var(--color-text)] flex flex-col"
 >
 	<div
-		class="flex items-center justify-between h-12 px-4 border-b border-[var(--color-border)] shrink-0"
+		class="flex items-center justify-between h-12 px-3 border-b border-[var(--color-border)] shrink-0"
 	>
 		<h1 class="text-base font-semibold">Dischound</h1>
 		<button
@@ -151,7 +151,7 @@
 	</div>
 
 	{#if data}
-		<div class="px-4 pt-3 pb-2 flex flex-col gap-2 shrink-0 border-b border-[var(--color-border)]">
+		<div class="px-3 py-2 flex flex-col gap-1.5 shrink-0 border-b border-[var(--color-border)]">
 			<SearchBar nodes={data.nodes} {onSearch} />
 
 			<div
@@ -180,10 +180,10 @@
 			</div>
 		</div>
 
-		<div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 scrollbar-thin">
+		<div class="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2 scrollbar-thin">
 			{#if selectedNode}
 				<div
-					class="bg-[var(--color-surface-raised)] rounded-md p-3 flex flex-col gap-2 border border-[var(--color-border)]"
+					class="bg-[var(--color-surface-raised)] rounded-md p-2.5 flex flex-col gap-1.5 border border-[var(--color-border)]"
 				>
 					<div class="flex items-center gap-2.5">
 						{#if selectedNode.avatar}
@@ -248,9 +248,11 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-2 gap-2">
+			<div class="grid {stats.length === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
 				{#each stats as [value, label] (label)}
-					<div class="bg-[var(--color-surface-raised)] rounded-md p-2.5 flex flex-col items-center">
+					<div
+						class="bg-[var(--color-surface-raised)] rounded-md px-2 py-1.5 flex flex-col items-center"
+					>
 						<span class="text-lg font-semibold">{value}</span>
 						<span class="text-[10px] text-[var(--color-text-dim)] uppercase tracking-widest"
 							>{label}</span
@@ -453,7 +455,7 @@
 											{(server?.name ?? '?')[0]}
 										</div>
 									{/if}
-									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs"
+									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
 										>{server?.name ?? serverId}</span
 									>
 									<span class="text-[11px] font-medium shrink-0">{count}</span>

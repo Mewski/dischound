@@ -6,10 +6,12 @@
 		node = null,
 		x = 0,
 		y = 0,
+		viewMode = 'mutuals',
 	}: {
 		node?: GraphNode | null;
 		x?: number;
 		y?: number;
+		viewMode?: 'mutuals' | 'servers';
 	} = $props();
 
 	let clampedX = $derived(
@@ -49,7 +51,9 @@
 
 		<div class="flex flex-col gap-1 text-xs">
 			<div class="flex justify-between">
-				<span class="text-[var(--color-text-dim)]">Cluster</span>
+				<span class="text-[var(--color-text-dim)]"
+					>{viewMode === 'servers' ? 'Server' : 'Cluster'}</span
+				>
 				<span class="text-[var(--color-text)] font-medium flex items-center gap-1">
 					<span
 						class="w-2 h-2 rounded-full inline-block"
@@ -58,7 +62,7 @@
 					#{node.cluster}
 				</span>
 			</div>
-			{#if node.bridging_score > 0}
+			{#if node.bridging_score > 0 && viewMode === 'mutuals'}
 				<div class="flex justify-between">
 					<span class="text-[var(--color-text-dim)]">Bridging</span>
 					<span class="font-medium" style="color: {bridgingColor(node.bridging_score)}">
