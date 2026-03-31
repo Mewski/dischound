@@ -171,7 +171,10 @@
 			});
 
 		const applyDrag = () => {
-			d3.select(svgEl!).selectAll<SVGGElement, GraphNode>('.node-group').data(nodes).call(drag);
+			d3.select(svgEl!)
+				.selectAll<SVGGElement, GraphNode>('.node-group')
+				.data(nodes, (d) => d.id)
+				.call(drag);
 		};
 
 		requestAnimationFrame(applyDrag);

@@ -253,9 +253,11 @@
 								></span>
 								<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
 									{#if viewMode === 'servers'}
-										{clusterServerName.get(cluster) ?? `Group ${cluster}`}
+										{cluster < 0
+											? 'No Server'
+											: (clusterServerName.get(cluster) ?? `Server ${cluster}`)}
 									{:else}
-										Cluster {cluster}
+										{cluster < 0 ? 'Unclustered' : `Cluster ${cluster}`}
 									{/if}
 								</span>
 								<span class="text-[11px] font-medium text-[var(--color-text-dim)]"
