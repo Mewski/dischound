@@ -205,7 +205,7 @@
 											class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-semibold text-white"
 											style="background: {clusterColor(node.cluster)}"
 										>
-											{node.username[0].toUpperCase()}
+											{(node.username || '?')[0].toUpperCase()}
 										</div>
 									{/if}
 									<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
@@ -302,7 +302,7 @@
 									<div
 										class="w-5 h-5 rounded-full shrink-0 bg-[var(--color-surface-raised)] flex items-center justify-center text-[9px] font-semibold text-[var(--color-text-dim)]"
 									>
-										{node.username[0].toUpperCase()}
+										{(node.username || '?')[0].toUpperCase()}
 									</div>
 								{/if}
 								<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"

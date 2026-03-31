@@ -50,6 +50,7 @@
 		type="text"
 		bind:value={query}
 		placeholder="Search"
+		aria-label="Search users"
 		class="bg-transparent border-none outline-none text-[var(--color-text)] font-sans text-sm w-full placeholder:text-[var(--color-text-dim)]"
 	/>
 </div>

@@ -38,7 +38,7 @@
 					class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-base text-white"
 					style="background: {clusterColor(node.cluster)}"
 				>
-					{node.username[0].toUpperCase()}
+					{(node.username || '?')[0].toUpperCase()}
 				</div>
 			{/if}
 			<div>

@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const since = Number(url.searchParams.get('v') ?? 0);
 	if (!store || version <= since) return new Response(null, { status: 204 });
 	return new Response(JSON.stringify({ v: version, data: store }), {
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', 'Access-Control-Allow-Origin': '*' },
 	});
 };
 

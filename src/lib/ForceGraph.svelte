@@ -36,9 +36,9 @@
 
 	function isEdgeHighlighted(e: GraphEdge): boolean {
 		if (!selectedNode) return true;
-		const sid = typeof e.source === 'string' ? e.source : e.source.id;
-		const tid = typeof e.target === 'string' ? e.target : e.target.id;
-		return sid === selectedNode.id || tid === selectedNode.id;
+		const s = e.source as GraphNode;
+		const t = e.target as GraphNode;
+		return s.id === selectedNode.id || t.id === selectedNode.id;
 	}
 
 	function isHighlighted(n: GraphNode): boolean {
@@ -63,7 +63,6 @@
 			c.y /= c.count;
 		}
 
-		// Pull toward own cluster centroid
 		const pull = viewMode === 'servers' ? 0.15 : 0.04;
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
@@ -73,7 +72,6 @@
 			n.vy! += (c.y - n.y) * alpha * pull;
 		}
 
-		// Inter-cluster repulsion scaled by cluster size
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
 			for (const [cluster, c] of centroids) {
@@ -88,14 +86,17 @@
 		}
 	}
 
-	$effect(() => {
-		// Recompute hulls when hiddenClusters changes
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		hiddenClusters.size;
+	function recomputeHulls() {
 		hulls =
 			viewMode === 'servers'
 				? computeServerHulls(nodes, nodeRadius, 10, hiddenClusters)
 				: computeHulls(nodes, nodeRadius, 10, hiddenClusters);
+	}
+
+	$effect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		hiddenClusters.size;
+		recomputeHulls();
 	});
 
 	const hullLine = d3
@@ -133,6 +134,7 @@
 			);
 		}
 
+		let frameId = 0;
 		simulation
 			.force('charge', d3.forceManyBody().strength(-200).distanceMax(400))
 			.force('x', d3.forceX(0).strength(0.02))
@@ -143,12 +145,19 @@
 			)
 			.force('cluster', clusterForce)
 			.on('tick', () => {
-				hulls =
-					viewMode === 'servers'
-						? computeServerHulls(nodes, nodeRadius, 10, hiddenClusters)
-						: computeHulls(nodes, nodeRadius, 10, hiddenClusters);
-				ticked++;
+				if (!frameId) {
+					frameId = requestAnimationFrame(() => {
+						recomputeHulls();
+						ticked++;
+						frameId = 0;
+					});
+				}
 			});
+	}
+
+	function centerTransform(): d3.ZoomTransform {
+		const { width, height } = svgEl!.getBoundingClientRect();
+		return d3.zoomIdentity.translate(width / 2, height / 2);
 	}
 
 	onMount(() => {
@@ -161,7 +170,7 @@
 				transform = event.transform;
 				try {
 					sessionStorage.setItem(
-						'dischound_view_transform',
+						'dischound_transform',
 						JSON.stringify({ x: transform.x, y: transform.y, k: transform.k }),
 					);
 				} catch {}
@@ -172,17 +181,15 @@
 
 		let initialTransform: d3.ZoomTransform;
 		try {
-			const saved = sessionStorage.getItem('dischound_view_transform');
+			const saved = sessionStorage.getItem('dischound_transform');
 			if (saved) {
 				const { x, y, k } = JSON.parse(saved);
 				initialTransform = d3.zoomIdentity.translate(x, y).scale(k);
 			} else {
-				const { width, height } = svgEl!.getBoundingClientRect();
-				initialTransform = d3.zoomIdentity.translate(width / 2, height / 2);
+				initialTransform = centerTransform();
 			}
 		} catch {
-			const { width, height } = svgEl!.getBoundingClientRect();
-			initialTransform = d3.zoomIdentity.translate(width / 2, height / 2);
+			initialTransform = centerTransform();
 		}
 		svg.call(zoom.transform, initialTransform);
 
@@ -218,8 +225,15 @@
 		const observer = new MutationObserver(applyDrag);
 		observer.observe(svgEl!, { childList: true, subtree: true });
 
+		const handleVisibility = () => {
+			if (document.hidden) simulation.stop();
+			else simulation.restart();
+		};
+		document.addEventListener('visibilitychange', handleVisibility);
+
 		return () => {
 			observer.disconnect();
+			document.removeEventListener('visibilitychange', handleVisibility);
 			simulation.stop();
 		};
 	});
@@ -254,11 +268,9 @@
 		{#if viewMode === 'mutuals'}
 			<!-- eslint-disable-next-line svelte/require-each-key -->
 			{#each edges as edge}
-				{@const source =
-					typeof edge.source === 'string' ? nodes.find((n) => n.id === edge.source) : edge.source}
-				{@const target =
-					typeof edge.target === 'string' ? nodes.find((n) => n.id === edge.target) : edge.target}
-				{#if source && target && isVisible(source) && isVisible(target)}
+				{@const source = edge.source as GraphNode}
+				{@const target = edge.target as GraphNode}
+				{#if isVisible(source) && isVisible(target)}
 					<line
 						x1={source.x}
 						y1={source.y}
@@ -332,17 +344,20 @@
 							style="fill: white"
 							font-size={r * 0.9}
 							font-family="Inter, sans-serif"
-							font-weight="600">{node.username[0].toUpperCase()}</text
+							font-weight="600">{(node.username || '?')[0].toUpperCase()}</text
 						>
 					{/if}
 
 					<text
 						y={r + 12}
 						text-anchor="middle"
-						style="fill: var(--color-text)"
 						font-size="9"
 						font-family="Inter, sans-serif"
-						opacity="0.7">{node.username}</text
+						paint-order="stroke"
+						stroke="var(--color-bg)"
+						stroke-width="3"
+						fill="var(--color-text)"
+						opacity="0.85">{node.username}</text
 					>
 				</g>
 			{/if}

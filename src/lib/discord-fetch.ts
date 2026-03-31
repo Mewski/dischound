@@ -38,15 +38,13 @@ export function processRawData(raw: RawPayload): GraphData {
 		}
 	}
 
-	const clusterSet = new Set(nodes.map((n) => n.cluster).filter((c) => c >= 0));
-
 	return {
 		nodes,
 		servers: raw.servers,
 		stats: {
 			total_friends: nodes.length,
 			total_connections: edgeCount,
-			clusters: clusterSet.size,
+			clusters: 0,
 			isolated_count: nodes.filter((n) => n.mutuals.length === 0).length,
 		},
 	};
@@ -80,7 +78,11 @@ export function assignMutualClusters(nodes: GraphNode[]): void {
 
 	for (let iter = 0; iter < 20; iter++) {
 		let changed = false;
-		const shuffled = [...nodes].sort(() => Math.random() - 0.5);
+		const shuffled = [...nodes];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
 
 		for (const node of shuffled) {
 			if (node.mutuals.length === 0) continue;

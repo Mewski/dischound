@@ -12,7 +12,7 @@
 
 	const CACHE_KEY = 'dischound_data';
 	const CACHE_VERSION = 3;
-	const CACHE_TTL = 1000 * 60 * 60;
+	const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 	let data: GraphData | null = $state(null);
 	let graphKey = $state(0);
@@ -52,7 +52,7 @@
 	}
 
 	function clone(d: GraphData): GraphData {
-		return JSON.parse(JSON.stringify(d));
+		return structuredClone(d);
 	}
 
 	function buildView(d: GraphData, mode: 'mutuals' | 'servers'): GraphData {
@@ -110,7 +110,7 @@
 	}
 </script>
 
-<div class="flex h-screen w-screen">
+<div class="flex h-dvh w-screen">
 	<Sidebar
 		{data}
 		{viewMode}
