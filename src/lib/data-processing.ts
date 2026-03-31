@@ -78,13 +78,7 @@ export function assignMutualClusters(nodes: GraphNode[]): void {
 
 	for (let iter = 0; iter < 20; iter++) {
 		let changed = false;
-		const shuffled = [...nodes];
-		for (let i = shuffled.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-		}
-
-		for (const node of shuffled) {
+		for (const node of nodes) {
 			if (node.mutuals.length === 0) continue;
 
 			const freq = new Map<string, number>();
