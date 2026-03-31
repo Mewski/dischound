@@ -102,7 +102,7 @@
 </script>
 
 <aside
-	class="w-[280px] shrink-0 h-screen bg-[var(--color-surface)] border-r border-[var(--color-border)] font-sans text-[var(--color-text)] flex flex-col"
+	class="w-[280px] shrink-0 h-dvh bg-[var(--color-surface)] border-r border-[var(--color-border)] font-sans text-[var(--color-text)] flex flex-col"
 >
 	<div
 		class="flex items-center justify-between h-12 px-4 border-b border-[var(--color-border)] shrink-0"
