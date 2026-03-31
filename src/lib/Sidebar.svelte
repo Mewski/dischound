@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { GraphNode, GraphData } from './types';
-	import { clusterColor, bridgingColor } from './graph-utils';
+	import { clusterColor, bridgingColor, bridgingLabel } from './graph-utils';
 	import { theme } from './theme.svelte';
 	import SearchBar from './SearchBar.svelte';
 	import FetchPanel from './FetchPanel.svelte';
@@ -8,6 +8,7 @@
 	let {
 		data,
 		viewMode = 'mutuals',
+		selectedNode = null,
 		onNodeClick = () => {},
 		onSearch = () => {},
 		onFetch = () => {},
@@ -17,6 +18,7 @@
 	}: {
 		data: GraphData | null;
 		viewMode?: 'mutuals' | 'servers';
+		selectedNode?: GraphNode | null;
 		onNodeClick?: (node: GraphNode) => void;
 		onSearch?: (ids: Set<string>) => void;
 		onFetch?: (data: GraphData) => void;
@@ -159,6 +161,73 @@
 		</div>
 
 		<div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 scrollbar-thin">
+			{#if selectedNode}
+				<div
+					class="bg-[var(--color-surface-raised)] rounded-md p-3 flex flex-col gap-2 border border-[var(--color-border)]"
+				>
+					<div class="flex items-center gap-2.5">
+						{#if selectedNode.avatar}
+							<img
+								src={selectedNode.avatar}
+								alt=""
+								crossorigin="anonymous"
+								class="w-8 h-8 rounded-full shrink-0 object-cover"
+							/>
+						{:else}
+							<div
+								class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold text-white"
+								style="background: {clusterColor(selectedNode.cluster)}"
+							>
+								{(selectedNode.username || '?')[0].toUpperCase()}
+							</div>
+						{/if}
+						<div class="flex-1 min-w-0">
+							<div class="text-sm font-semibold text-[var(--color-text)] truncate">
+								{selectedNode.display_name}
+							</div>
+							<div class="text-[11px] text-[var(--color-text-dim)]">
+								@{selectedNode.username}
+							</div>
+						</div>
+						<button
+							onclick={() => onNodeClick(selectedNode!)}
+							class="w-5 h-5 flex items-center justify-center rounded bg-transparent border-none text-[var(--color-text-dim)] cursor-pointer hover:text-[var(--color-text)] transition-colors shrink-0"
+						>
+							<svg
+								class="w-3 h-3"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M18 6L6 18M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+					<div class="flex gap-3 text-[11px] text-[var(--color-text-muted)]">
+						<span class="flex items-center gap-1">
+							<span
+								class="w-1.5 h-1.5 rounded-full"
+								style="background: {clusterColor(selectedNode.cluster)}"
+							></span>
+							#{selectedNode.cluster}
+						</span>
+						<span>{selectedNode.mutuals.length} mutuals</span>
+						<span>{selectedNode.guilds.length} servers</span>
+					</div>
+					{#if selectedNode.bridging_score > 0}
+						<div class="text-[11px]">
+							<span class="text-[var(--color-text-dim)]">Bridging:</span>
+							<span style="color: {bridgingColor(selectedNode.bridging_score)}">
+								{bridgingLabel(selectedNode.bridging_score)} ({selectedNode.bridging_score.toFixed(
+									3,
+								)})
+							</span>
+						</div>
+					{/if}
+				</div>
+			{/if}
+
 			<div class="grid grid-cols-2 gap-2">
 				{#each [[data.stats.total_friends, 'Friends'], [data.stats.total_connections, 'Connections'], [data.stats.clusters, 'Clusters'], [data.stats.isolated_count, 'Isolated']] as [value, label] (label)}
 					<div class="bg-[var(--color-surface-raised)] rounded-md p-2.5 flex flex-col items-center">
@@ -190,7 +259,11 @@
 						<div class="flex flex-col gap-0.5">
 							{#each topBridges as node (node.id)}
 								<button
-									class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm bg-transparent border-none text-[var(--color-text-muted)] text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
+									class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm border-none text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
+									class:bg-[var(--color-hover)]={selectedNode?.id === node.id}
+									class:text-[var(--color-text)]={selectedNode?.id === node.id}
+									class:bg-transparent={selectedNode?.id !== node.id}
+									class:text-[var(--color-text-muted)]={selectedNode?.id !== node.id}
 									onclick={() => onNodeClick(node)}
 								>
 									{#if node.avatar}
@@ -288,7 +361,11 @@
 					<div class="flex flex-col gap-0.5">
 						{#each isolated.slice(0, 15) as node (node.id)}
 							<button
-								class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm bg-transparent border-none text-[var(--color-text-muted)] text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
+								class="flex items-center gap-2 px-2.5 py-1.5 rounded text-sm border-none text-left cursor-pointer w-full font-[inherit] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)] transition-colors"
+								class:bg-[var(--color-hover)]={selectedNode?.id === node.id}
+								class:text-[var(--color-text)]={selectedNode?.id === node.id}
+								class:bg-transparent={selectedNode?.id !== node.id}
+								class:text-[var(--color-text-muted)]={selectedNode?.id !== node.id}
 								onclick={() => onNodeClick(node)}
 							>
 								{#if node.avatar}

@@ -114,6 +114,7 @@
 	<Sidebar
 		{data}
 		{viewMode}
+		{selectedNode}
 		onNodeClick={(node) => (selectedNode = selectedNode?.id === node.id ? null : node)}
 		onSearch={(ids) => (searchHighlight = ids)}
 		onFetch={handleFetch}

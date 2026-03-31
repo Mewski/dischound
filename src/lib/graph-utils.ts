@@ -100,31 +100,64 @@ export function computeServerHulls(
 	padding = 10,
 	hiddenClusters: Set<number> = new Set(),
 ): Map<number, [number, number][]> {
-	const serverMembers = new Map<string, GraphNode[]>();
+	// Group visible nodes by their primary cluster (same as computeHulls,
+	// but also include nodes whose primary cluster matches a visible group)
+	const byCluster = new Map<number, GraphNode[]>();
 
 	for (const node of nodes) {
-		if (node.x == null || node.y == null) continue;
+		if (node.cluster < 0 || node.x == null || node.y == null) continue;
 		if (hiddenClusters.has(node.cluster)) continue;
-		for (const g of node.guilds) {
-			if (!serverMembers.has(g.id)) serverMembers.set(g.id, []);
-			serverMembers.get(g.id)!.push(node);
-		}
+		if (!byCluster.has(node.cluster)) byCluster.set(node.cluster, []);
+		byCluster.get(node.cluster)!.push(node);
 	}
 
-	const sorted = [...serverMembers.entries()].sort((a, b) => b[1].length - a[1].length);
+	// For each cluster, also pull in visible nodes from other clusters
+	// that share the same server (overlap hulls)
+	const clusterToServer = new Map<number, string>();
+	const serverPop = new Map<string, number>();
+	for (const node of nodes) {
+		for (const g of node.guilds) {
+			serverPop.set(g.id, (serverPop.get(g.id) ?? 0) + 1);
+		}
+	}
+	const serverOrder = [...serverPop.entries()].sort((a, b) => b[1] - a[1]);
+	serverOrder.forEach(([id], i) => clusterToServer.set(i, id));
 
+	// Build set of server IDs for each cluster
+	const clusterServerIds = new Map<number, string>();
+	for (const [cluster, serverId] of clusterToServer) {
+		clusterServerIds.set(cluster, serverId);
+	}
+
+	// For each visible cluster, find all visible nodes that share that server
+	const hullMembers = new Map<number, Set<string>>();
+	for (const [cluster] of byCluster) {
+		const serverId = clusterServerIds.get(cluster);
+		if (!serverId) continue;
+		const members = new Set<string>();
+		for (const node of nodes) {
+			if (node.x == null || node.y == null) continue;
+			if (hiddenClusters.has(node.cluster)) continue;
+			if (node.guilds.some((g) => g.id === serverId)) {
+				members.add(node.id);
+			}
+		}
+		hullMembers.set(cluster, members);
+	}
+
+	const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 	const hulls = new Map<number, [number, number][]>();
-	for (let i = 0; i < sorted.length; i++) {
-		const members = sorted[i][1];
-		if (members.length < 3) continue;
+	for (const [cluster, memberIds] of hullMembers) {
+		if (memberIds.size < 3) continue;
 
 		const points: [number, number][] = [];
-		for (const n of members) {
-			points.push(...nodeHullPoints(n, nodeRadius, padding));
+		for (const id of memberIds) {
+			const n = nodeMap.get(id);
+			if (n) points.push(...nodeHullPoints(n, nodeRadius, padding));
 		}
 
 		const hull = d3.polygonHull(points);
-		if (hull) hulls.set(i, hull);
+		if (hull) hulls.set(cluster, hull);
 	}
 
 	return hulls;
