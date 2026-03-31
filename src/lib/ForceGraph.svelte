@@ -88,6 +88,16 @@
 		}
 	}
 
+	$effect(() => {
+		// Recompute hulls when hiddenClusters changes (even if simulation is settled)
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		hiddenClusters;
+		hulls =
+			viewMode === 'servers'
+				? computeServerHulls(nodes, nodeRadius, 10, hiddenClusters)
+				: computeHulls(nodes, nodeRadius, 10, hiddenClusters);
+	});
+
 	const hullLine = d3
 		.line<[number, number]>()
 		.x((d) => d[0])
