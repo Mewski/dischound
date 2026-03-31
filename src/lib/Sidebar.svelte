@@ -482,21 +482,19 @@
 				</div>
 			{/if}
 
-			<div class="mt-auto pt-3 border-t border-[var(--color-border)]">
-				<FetchPanel onComplete={onFetch} />
-			</div>
+		</div>
+		<div class="shrink-0 px-3 py-2 border-t border-[var(--color-border)]">
+			<FetchPanel onComplete={onFetch} />
 		</div>
 	{:else}
-		<div class="flex-1 flex flex-col items-center justify-center px-6 gap-4">
+		<div class="flex-1 flex flex-col items-center justify-center px-6 gap-3">
 			<div class="text-center">
 				<div class="text-sm font-medium text-[var(--color-text)] mb-1">No data loaded</div>
 				<div class="text-xs text-[var(--color-text-dim)] leading-relaxed">
 					Run the Howl collector in Discord
 				</div>
 			</div>
-			<div class="w-full">
-				<FetchPanel onComplete={onFetch} />
-			</div>
+			<FetchPanel onComplete={onFetch} />
 		</div>
 	{/if}
 </aside>

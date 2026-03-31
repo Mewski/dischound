@@ -71,19 +71,12 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="flex items-center justify-between">
-	<button
-		onclick={() => (showModal = true)}
-		class="text-[11px] font-medium text-[var(--color-text-dim)] bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors underline decoration-dotted underline-offset-2"
-	>
-		Collect new data
-	</button>
-	{#if status === 'done'}
-		<span class="text-[11px] text-[var(--color-success)]">Ready</span>
-	{:else if status === 'listening'}
-		<span class="text-[11px] text-[var(--color-text-dim)]">Listening...</span>
-	{/if}
-</div>
+<button
+	onclick={() => (showModal = true)}
+	class="text-[11px] font-medium text-[var(--color-text-dim)] bg-transparent border-none cursor-pointer hover:text-[var(--color-text-muted)] transition-colors underline decoration-dotted underline-offset-2"
+>
+	Collect new data
+</button>
 
 {#if showModal}
 	<div
