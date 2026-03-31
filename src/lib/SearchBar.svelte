@@ -11,17 +11,22 @@
 
 	let query = $state('');
 
+	function strip(s: string): string {
+		return s
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase();
+	}
+
 	$effect(() => {
 		if (!query.trim()) {
 			onSearch(new Set());
 			return;
 		}
-		const q = query.toLowerCase();
+		const q = strip(query);
 		const ids = new Set(
 			nodes
-				.filter(
-					(n) => n.username.toLowerCase().includes(q) || n.display_name.toLowerCase().includes(q),
-				)
+				.filter((n) => strip(n.username).includes(q) || strip(n.display_name).includes(q))
 				.map((n) => n.id),
 		);
 		onSearch(ids);
