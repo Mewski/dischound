@@ -351,13 +351,10 @@
 					<text
 						y={r + 12}
 						text-anchor="middle"
+						style="fill: var(--color-text)"
 						font-size="9"
 						font-family="Inter, sans-serif"
-						paint-order="stroke"
-						stroke="var(--color-bg)"
-						stroke-width="3"
-						fill="var(--color-text)"
-						opacity="0.85">{node.username}</text
+						opacity="0.7">{node.username}</text
 					>
 				</g>
 			{/if}
