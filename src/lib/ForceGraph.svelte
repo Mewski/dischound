@@ -135,8 +135,8 @@
 			.on('tick', () => {
 				hulls =
 					viewMode === 'servers'
-						? computeServerHulls(nodes, nodeRadius)
-						: computeHulls(nodes, nodeRadius);
+						? computeServerHulls(nodes, nodeRadius, 10, hiddenClusters)
+						: computeHulls(nodes, nodeRadius, 10, hiddenClusters);
 				ticked++;
 			});
 	}

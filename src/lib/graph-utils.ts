@@ -66,12 +66,14 @@ export function computeHulls(
 	nodes: GraphNode[],
 	nodeRadius: (n: GraphNode) => number,
 	padding = 10,
+	hiddenClusters: Set<number> = new Set(),
 ): Map<number, [number, number][]> {
 	const hulls = new Map<number, [number, number][]>();
 	const byCluster = new Map<number, GraphNode[]>();
 
 	for (const node of nodes) {
 		if (node.cluster < 0 || node.x == null || node.y == null) continue;
+		if (hiddenClusters.has(node.cluster)) continue;
 		if (!byCluster.has(node.cluster)) byCluster.set(node.cluster, []);
 		byCluster.get(node.cluster)!.push(node);
 	}
@@ -95,11 +97,13 @@ export function computeServerHulls(
 	nodes: GraphNode[],
 	nodeRadius: (n: GraphNode) => number,
 	padding = 10,
+	hiddenClusters: Set<number> = new Set(),
 ): Map<number, [number, number][]> {
 	const serverMembers = new Map<string, GraphNode[]>();
 
 	for (const node of nodes) {
 		if (node.x == null || node.y == null) continue;
+		if (hiddenClusters.has(node.cluster)) continue;
 		for (const g of node.guilds) {
 			if (!serverMembers.has(g.id)) serverMembers.set(g.id, []);
 			serverMembers.get(g.id)!.push(node);
