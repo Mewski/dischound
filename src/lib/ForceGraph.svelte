@@ -2,10 +2,11 @@
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 	import type { GraphNode, GraphEdge } from './types';
-	import { buildEdges, clusterColor, computeHulls } from './graph-utils';
+	import { buildEdges, clusterColor, computeHulls, computeServerHulls } from './graph-utils';
 
 	let {
 		nodes,
+		viewMode = 'mutuals',
 		onNodeHover = () => {},
 		onNodeClick = () => {},
 		selectedNode = null,
@@ -13,6 +14,7 @@
 		hiddenClusters = new Set<number>(),
 	}: {
 		nodes: GraphNode[];
+		viewMode?: 'mutuals' | 'servers';
 		onNodeHover?: (node: GraphNode | null, event: MouseEvent | null) => void;
 		onNodeClick?: (node: GraphNode | null) => void;
 		selectedNode?: GraphNode | null;
@@ -60,12 +62,29 @@
 			c.x /= c.count;
 			c.y /= c.count;
 		}
+
+		// Pull toward own cluster centroid
+		const pull = viewMode === 'servers' ? 0.15 : 0.04;
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
 			const c = centroids.get(n.cluster);
 			if (!c) continue;
-			n.vx! += (c.x - n.x) * alpha * 0.04;
-			n.vy! += (c.y - n.y) * alpha * 0.04;
+			n.vx! += (c.x - n.x) * alpha * pull;
+			n.vy! += (c.y - n.y) * alpha * pull;
+		}
+
+		// Inter-cluster repulsion scaled by cluster size
+		for (const n of nodes) {
+			if (n.cluster < 0 || n.x == null || n.y == null) continue;
+			for (const [cluster, c] of centroids) {
+				if (cluster === n.cluster) continue;
+				const dx = n.x! - c.x;
+				const dy = n.y! - c.y;
+				const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+				const push = (c.count * alpha * 3) / dist;
+				n.vx! += (dx / dist) * push;
+				n.vy! += (dy / dist) * push;
+			}
 		}
 	}
 
@@ -82,26 +101,33 @@
 
 		if (simulation) simulation.stop();
 
-		simulation = d3
-			.forceSimulation<GraphNode>(nodes)
-			.force(
+		simulation = d3.forceSimulation<GraphNode>(nodes);
+
+		if (viewMode === 'mutuals') {
+			simulation.force(
 				'link',
 				d3
 					.forceLink<GraphNode, GraphEdge>(edges)
 					.id((d) => d.id)
 					.distance(90)
 					.strength(0.3),
-			)
+			);
+		}
+
+		simulation
 			.force('charge', d3.forceManyBody().strength(-200).distanceMax(400))
-			.force('x', d3.forceX(0).strength(0.01))
-			.force('y', d3.forceY(0).strength(0.01))
+			.force('x', d3.forceX(0).strength(0.02))
+			.force('y', d3.forceY(0).strength(0.02))
 			.force(
 				'collide',
 				d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 14),
 			)
 			.force('cluster', clusterForce)
 			.on('tick', () => {
-				hulls = computeHulls(nodes, nodeRadius);
+				hulls =
+					viewMode === 'servers'
+						? computeServerHulls(nodes, nodeRadius)
+						: computeHulls(nodes, nodeRadius);
 				ticked++;
 			});
 	}
@@ -176,24 +202,26 @@
 			{/if}
 		{/each}
 
-		<!-- eslint-disable-next-line svelte/require-each-key -->
-		{#each edges as edge}
-			{@const source =
-				typeof edge.source === 'string' ? nodes.find((n) => n.id === edge.source) : edge.source}
-			{@const target =
-				typeof edge.target === 'string' ? nodes.find((n) => n.id === edge.target) : edge.target}
-			{#if source && target && isVisible(source) && isVisible(target)}
-				<line
-					x1={source.x}
-					y1={source.y}
-					x2={target.x}
-					y2={target.y}
-					style="stroke: var(--color-text-dim)"
-					stroke-opacity={isEdgeHighlighted(edge) ? 0.5 : 0.12}
-					stroke-width="0.8"
-				/>
-			{/if}
-		{/each}
+		{#if viewMode === 'mutuals'}
+			<!-- eslint-disable-next-line svelte/require-each-key -->
+			{#each edges as edge}
+				{@const source =
+					typeof edge.source === 'string' ? nodes.find((n) => n.id === edge.source) : edge.source}
+				{@const target =
+					typeof edge.target === 'string' ? nodes.find((n) => n.id === edge.target) : edge.target}
+				{#if source && target && isVisible(source) && isVisible(target)}
+					<line
+						x1={source.x}
+						y1={source.y}
+						x2={target.x}
+						y2={target.y}
+						style="stroke: var(--color-text-dim)"
+						stroke-opacity={isEdgeHighlighted(edge) ? 0.5 : 0.12}
+						stroke-width="0.8"
+					/>
+				{/if}
+			{/each}
+		{/if}
 
 		{#each nodes as node (node.id)}
 			{#if isVisible(node)}

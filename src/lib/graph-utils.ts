@@ -44,6 +44,24 @@ export function clusterColor(cluster: number): string {
 	return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
 }
 
+function nodeHullPoints(
+	n: GraphNode,
+	nodeRadius: (n: GraphNode) => number,
+	padding: number,
+): [number, number][] {
+	const r = nodeRadius(n) + padding;
+	const textBottom = nodeRadius(n) + 22 + padding;
+	const points: [number, number][] = [];
+	for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+		const py = n.y! + Math.sin(a) * r;
+		const extendedY = Math.max(py, n.y! + textBottom);
+		points.push([n.x! + Math.cos(a) * r, a > 0 && a < Math.PI ? extendedY : py]);
+	}
+	points.push([n.x! - r, n.y! + textBottom]);
+	points.push([n.x! + r, n.y! + textBottom]);
+	return points;
+}
+
 export function computeHulls(
 	nodes: GraphNode[],
 	nodeRadius: (n: GraphNode) => number,
@@ -63,20 +81,45 @@ export function computeHulls(
 
 		const points: [number, number][] = [];
 		for (const n of clusterNodes) {
-			const r = nodeRadius(n) + padding;
-			const textBottom = nodeRadius(n) + 22 + padding;
-			for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-				const py = n.y! + Math.sin(a) * r;
-				const extendedY = Math.max(py, n.y! + textBottom);
-				points.push([n.x! + Math.cos(a) * r, a > 0 && a < Math.PI ? extendedY : py]);
-			}
-			// explicitly add text label extent
-			points.push([n.x! - r, n.y! + textBottom]);
-			points.push([n.x! + r, n.y! + textBottom]);
+			points.push(...nodeHullPoints(n, nodeRadius, padding));
 		}
 
 		const hull = d3.polygonHull(points);
 		if (hull) hulls.set(cluster, hull);
+	}
+
+	return hulls;
+}
+
+export function computeServerHulls(
+	nodes: GraphNode[],
+	nodeRadius: (n: GraphNode) => number,
+	padding = 10,
+): Map<number, [number, number][]> {
+	const serverMembers = new Map<string, GraphNode[]>();
+
+	for (const node of nodes) {
+		if (node.x == null || node.y == null) continue;
+		for (const g of node.guilds) {
+			if (!serverMembers.has(g.id)) serverMembers.set(g.id, []);
+			serverMembers.get(g.id)!.push(node);
+		}
+	}
+
+	const sorted = [...serverMembers.entries()].sort((a, b) => b[1].length - a[1].length);
+
+	const hulls = new Map<number, [number, number][]>();
+	for (let i = 0; i < sorted.length; i++) {
+		const members = sorted[i][1];
+		if (members.length < 3) continue;
+
+		const points: [number, number][] = [];
+		for (const n of members) {
+			points.push(...nodeHullPoints(n, nodeRadius, padding));
+		}
+
+		const hull = d3.polygonHull(points);
+		if (hull) hulls.set(i, hull);
 	}
 
 	return hulls;

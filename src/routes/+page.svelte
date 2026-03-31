@@ -121,6 +121,7 @@
 			{#key graphKey}
 				<ForceGraph
 					nodes={data.nodes}
+					{viewMode}
 					onNodeHover={handleNodeHover}
 					onNodeClick={(node) => (selectedNode = node)}
 					{selectedNode}
