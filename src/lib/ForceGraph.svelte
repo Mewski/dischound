@@ -52,7 +52,6 @@
 		const centroids = new Map<number, { x: number; y: number; count: number }>();
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
-			if (hiddenClusters.has(n.cluster)) continue;
 			const c = centroids.get(n.cluster) ?? { x: 0, y: 0, count: 0 };
 			c.x += n.x;
 			c.y += n.y;
@@ -68,7 +67,6 @@
 		const pull = viewMode === 'servers' ? 0.15 : 0.04;
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
-			if (hiddenClusters.has(n.cluster)) continue;
 			const c = centroids.get(n.cluster);
 			if (!c) continue;
 			n.vx! += (c.x - n.x) * alpha * pull;
@@ -78,7 +76,6 @@
 		// Inter-cluster repulsion scaled by cluster size
 		for (const n of nodes) {
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
-			if (hiddenClusters.has(n.cluster)) continue;
 			for (const [cluster, c] of centroids) {
 				if (cluster === n.cluster) continue;
 				const dx = n.x! - c.x;
@@ -89,22 +86,12 @@
 				n.vy! += (dy / dist) * push;
 			}
 		}
-
-		// Zero out forces on hidden nodes so they don't participate
-		for (const n of nodes) {
-			if (!hiddenClusters.has(n.cluster)) continue;
-			n.vx = 0;
-			n.vy = 0;
-		}
 	}
 
 	$effect(() => {
-		// Reheat simulation and recompute hulls when visibility changes
+		// Recompute hulls when hiddenClusters changes
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		hiddenClusters;
-		if (simulation) {
-			simulation.alpha(0.3).restart();
-		}
+		hiddenClusters.size;
 		hulls =
 			viewMode === 'servers'
 				? computeServerHulls(nodes, nodeRadius, 10, hiddenClusters)
@@ -141,8 +128,6 @@
 					.strength((e) => {
 						const s = typeof e.source === 'string' ? nodeMap.get(e.source) : e.source;
 						const t = typeof e.target === 'string' ? nodeMap.get(e.target) : e.target;
-						if ((s && hiddenClusters.has(s.cluster)) || (t && hiddenClusters.has(t.cluster)))
-							return 0;
 						return s?.cluster !== t?.cluster ? 0.02 : 0.3;
 					}),
 			);
