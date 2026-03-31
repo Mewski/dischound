@@ -51,14 +51,15 @@ function nodeHullPoints(
 ): [number, number][] {
 	const r = nodeRadius(n) + padding;
 	const textBottom = nodeRadius(n) + 22 + padding;
+	const textHalfWidth = Math.max(r, n.username.length * 2.7 + padding);
 	const points: [number, number][] = [];
 	for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
 		const py = n.y! + Math.sin(a) * r;
 		const extendedY = Math.max(py, n.y! + textBottom);
 		points.push([n.x! + Math.cos(a) * r, a > 0 && a < Math.PI ? extendedY : py]);
 	}
-	points.push([n.x! - r, n.y! + textBottom]);
-	points.push([n.x! + r, n.y! + textBottom]);
+	points.push([n.x! - textHalfWidth, n.y! + textBottom]);
+	points.push([n.x! + textHalfWidth, n.y! + textBottom]);
 	return points;
 }
 
