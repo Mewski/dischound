@@ -64,9 +64,15 @@ export function computeHulls(
 		const points: [number, number][] = [];
 		for (const n of clusterNodes) {
 			const r = nodeRadius(n) + padding;
-			for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
-				points.push([n.x! + Math.cos(a) * r, n.y! + Math.sin(a) * r]);
+			const textBottom = nodeRadius(n) + 22 + padding;
+			for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+				const py = n.y! + Math.sin(a) * r;
+				const extendedY = Math.max(py, n.y! + textBottom);
+				points.push([n.x! + Math.cos(a) * r, a > 0 && a < Math.PI ? extendedY : py]);
 			}
+			// explicitly add text label extent
+			points.push([n.x! - r, n.y! + textBottom]);
+			points.push([n.x! + r, n.y! + textBottom]);
 		}
 
 		const hull = d3.polygonHull(points);

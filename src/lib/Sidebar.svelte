@@ -59,6 +59,34 @@
 		})(),
 	);
 
+	let clusterServerName = $derived(
+		(() => {
+			if (!data) return new Map<number, string>();
+			const map = new Map<number, string>();
+			for (const [cluster, members] of clusterGroups) {
+				if (cluster < 0) continue;
+				const freq = new Map<string, number>();
+				for (const n of members) {
+					for (const g of n.guilds) {
+						freq.set(g.id, (freq.get(g.id) ?? 0) + 1);
+					}
+				}
+				let bestId = '';
+				let bestCount = 0;
+				for (const [id, count] of freq) {
+					if (count > bestCount) {
+						bestId = id;
+						bestCount = count;
+					}
+				}
+				if (bestId && data.servers[bestId]) {
+					map.set(cluster, data.servers[bestId].name);
+				}
+			}
+			return map;
+		})(),
+	);
+
 	let serverCounts = $derived(
 		(() => {
 			if (!data) return [];
@@ -222,11 +250,8 @@
 									style="background: {clusterColor(cluster)}"
 								></span>
 								<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-									{#if viewMode === 'servers' && data?.servers}
-										{@const serverId = serverCounts[cluster]?.[0]}
-										{serverId
-											? (data.servers[serverId]?.name ?? `Server ${cluster}`)
-											: `Group ${cluster}`}
+									{#if viewMode === 'servers'}
+										{clusterServerName.get(cluster) ?? `Group ${cluster}`}
 									{:else}
 										Cluster {cluster}
 									{/if}

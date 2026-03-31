@@ -26,7 +26,7 @@
 	let transform = $state(d3.zoomIdentity);
 	let ticked = $state(0);
 
-	const nodeRadius = (n: GraphNode) => 14 + n.bridging_score * 20;
+	const nodeRadius = (n: GraphNode) => 12 + n.bridging_score * 10;
 
 	function isVisible(n: GraphNode): boolean {
 		return !hiddenClusters.has(n.cluster);
@@ -64,8 +64,8 @@
 			if (n.cluster < 0 || n.x == null || n.y == null) continue;
 			const c = centroids.get(n.cluster);
 			if (!c) continue;
-			n.vx! += (c.x - n.x) * alpha * 0.08;
-			n.vy! += (c.y - n.y) * alpha * 0.08;
+			n.vx! += (c.x - n.x) * alpha * 0.04;
+			n.vy! += (c.y - n.y) * alpha * 0.04;
 		}
 	}
 
@@ -89,14 +89,15 @@
 				d3
 					.forceLink<GraphNode, GraphEdge>(edges)
 					.id((d) => d.id)
-					.distance(65)
-					.strength(0.4),
+					.distance(90)
+					.strength(0.3),
 			)
-			.force('charge', d3.forceManyBody().strength(-140))
-			.force('center', d3.forceCenter(0, 0))
+			.force('charge', d3.forceManyBody().strength(-200).distanceMax(400))
+			.force('x', d3.forceX(0).strength(0.01))
+			.force('y', d3.forceY(0).strength(0.01))
 			.force(
 				'collide',
-				d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 4),
+				d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 14),
 			)
 			.force('cluster', clusterForce)
 			.on('tick', () => {
