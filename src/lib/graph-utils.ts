@@ -80,8 +80,6 @@ export function computeHulls(
 	}
 
 	for (const [cluster, clusterNodes] of byCluster) {
-		if (clusterNodes.length < 3) continue;
-
 		const points: [number, number][] = [];
 		for (const n of clusterNodes) {
 			points.push(...nodeHullPoints(n, nodeRadius, padding));
@@ -136,7 +134,7 @@ export function computeServerHulls(
 		const serverId = clusterToServer.get(cluster);
 		if (!serverId) continue;
 		const members = nodesByServer.get(serverId);
-		if (!members || members.length < 3) continue;
+		if (!members || members.length === 0) continue;
 
 		const points: [number, number][] = [];
 		for (const n of members) {

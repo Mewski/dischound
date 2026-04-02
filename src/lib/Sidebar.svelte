@@ -549,7 +549,6 @@
 					{/if}
 				</div>
 			{/if}
-
 		</div>
 		<div class="shrink-0 px-3 py-2 border-t border-[var(--color-border)]">
 			<FetchPanel onComplete={onFetch} />
