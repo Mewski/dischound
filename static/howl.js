@@ -8,16 +8,31 @@
 
 	function extractToken() {
 		try {
+			let token = null;
+			const chunks = window.webpackChunkdiscord_app;
+			chunks.push([[Symbol("howl")], {}, (require) => {
+				try {
+					Object.values(require.c).some((module) => {
+						const auth = module?.exports;
+						if (typeof auth?.setToken !== "function" || typeof auth?.getToken !== "function") return false;
+						token = auth.getToken();
+						return isToken(token);
+					});
+				} catch {}
+			}]);
+			if (isToken(token)) return token;
+		} catch {}
+		try {
 			const candidates = [];
 			webpackChunkdiscord_app.push([[Date.now()], {}, (r) => {
 				for (const id of Object.keys(r.c)) {
 					const m = r.c[id]?.exports;
-					if (typeof m?.default?.getToken === "function") candidates.push(m.default.getToken);
-					if (typeof m?.getToken === "function") candidates.push(m.getToken);
+					if (typeof m?.default?.getToken === "function") candidates.push(() => m.default.getToken());
+					if (typeof m?.getToken === "function") candidates.push(() => m.getToken());
 				}
 			}]);
-			for (const fn of candidates) {
-				try { const t = fn(); if (isToken(t)) return t; } catch {}
+			for (const getToken of candidates) {
+				try { const t = getToken(); if (isToken(t)) return t; } catch {}
 			}
 		} catch {}
 		try {
